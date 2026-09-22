@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Tasks</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // 첫 페인트 전에 테마를 적용해야 라이트 화면이 번쩍이지 않는다
+    (function () {
+      try {
+        const saved = localStorage.getItem('my-tasks-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main class="card">
+    <header class="card-head">
+      <div class="head-left">
+        <h1 class="title">My Tasks</h1>
+        <span class="badge" id="remaining-badge">0개 남음</span>
+      </div>
+
+      <button
+        type="button"
+        class="theme-toggle"
+        id="theme-toggle"
+        aria-label="다크 모드 전환"
+      >
+        <span class="theme-icon" id="theme-icon">🌙</span>
+      </button>
+    </header>
+
+    <!-- 진행률 대시보드: 요소를 다시 만들지 않고 값만 갱신해야
+         프로그레스 바의 전환 효과가 살아있으므로 마크업을 고정해 둔다 -->
+    <section class="dashboard">
+      <div class="overall-head">
+        <span class="overall-label">전체 진행률</span>
+        <span class="overall-value" id="overall-value">0/0 완료 (0%)</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="overall-fill"></div>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-stat" data-category="work">
+          <div class="mini-head">
+            <span class="mini-label">업무</span>
+            <span class="mini-count" data-role="count">0/0</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill" data-role="fill"></div>
+          </div>
+        </div>
+
+        <div class="mini-stat" data-category="personal">
+          <div class="mini-head">
+            <span class="mini-label">개인</span>
+            <span class="mini-count" data-role="count">0/0</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill" data-role="fill"></div>
+          </div>
+        </div>
+
+        <div class="mini-stat" data-category="study">
+          <div class="mini-head">
+            <span class="mini-label">공부</span>
+            <span class="mini-count" data-role="count">0/0</span>
+          </div>
+          <div class="mini-track">
+            <div class="mini-fill" data-role="fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="today-count" id="today-count">오늘 추가된 할 일 0개</p>
+    </section>
+
+    <div class="filter-bar" id="filter-bar">
+      <button type="button" class="filter-btn is-active" data-filter="all">전체</button>
+      <button type="button" class="filter-btn" data-filter="work">업무</button>
+      <button type="button" class="filter-btn" data-filter="personal">개인</button>
+      <button type="button" class="filter-btn" data-filter="study">공부</button>
+    </div>
+
+    <form class="input-row" id="todo-form">
+      <input
+        type="text"
+        id="todo-input"
+        class="todo-input"
+        placeholder="할 일을 입력하세요"
+        autocomplete="off"
+      >
+      <select id="category-select" class="category-select" aria-label="카테고리">
+        <option value="work">업무</option>
+        <option value="personal">개인</option>
+        <option value="study">공부</option>
+      </select>
+      <button type="submit" class="add-btn">추가</button>
+    </form>
+
+    <div class="tool-row">
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="할 일 검색"
+        autocomplete="off"
+        aria-label="할 일 검색"
+      >
+      <select id="sort-select" class="sort-select" aria-label="정렬 기준">
+        <option value="manual">직접 정렬</option>
+        <option value="created">생성일순</option>
+        <option value="category">카테고리순</option>
+        <option value="done">완료 상태순</option>
+      </select>
+    </div>
+
+    <div class="action-row">
+      <button type="button" class="ghost-btn" id="export-btn">내보내기</button>
+      <button type="button" class="ghost-btn" id="import-btn">가져오기</button>
+      <button type="button" class="ghost-btn danger" id="clear-done-btn" disabled>
+        완료 항목 삭제
+      </button>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+
+    <ul class="todo-list" id="todo-list"></ul>
+
+    <p class="empty-msg" id="empty-msg">할 일이 없습니다. 추가해보세요!</p>
+
+    <footer class="shortcut-hint">
+      <kbd>Alt</kbd>+<kbd>N</kbd> 입력창 · <kbd>Alt</kbd>+<kbd>1</kbd>~<kbd>4</kbd> 필터
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog class="confirm-dialog" id="confirm-dialog">
+    <div class="confirm-inner">
+      <h2 class="confirm-title" id="confirm-title"></h2>
+      <p class="confirm-text" id="confirm-text"></p>
+      <div class="confirm-actions" id="confirm-actions"></div>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
