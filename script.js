@@ -10,7 +10,34 @@ const CATEGORIES = {
 
 const CATEGORY_ORDER = { work: 0, personal: 1, study: 2 };
 
+// 자동 분류용 키워드. 모두 소문자로 적는다 (입력도 소문자로 바꿔 대조하므로).
+// 두 카테고리에 같은 단어를 넣지 않는다 — 양쪽 점수가 같이 올라 판단에 기여하지 못한다.
+// 한 카테고리 안에서도 '보고'/'보고서' 처럼 한쪽이 다른 쪽에 포함되면 이중으로 세어진다.
+const KEYWORDS = {
+  work: [
+    '회의', '미팅', '보고', '메일', '기획', '발표', '자료', '제출',
+    '마감', '업무', '프로젝트', '결재', '출장', '고객', '계약', '회식',
+    '야근', '면접', '실적', '거래처',
+    'meeting', 'report', 'deadline', 'invoice',
+  ],
+  personal: [
+    '장보기', '병원', '약속', '운동', '청소', '빨래', '요리', '은행',
+    '가족', '친구', '생일', '여행', '예약', '미용실', '쇼핑', '택배',
+    '세탁', '공과금', '산책', '취미',
+    'shopping', 'doctor', 'dentist', 'workout',
+  ],
+  study: [
+    '공부', '시험', '강의', '수업', '과제', '숙제', '독서', '복습',
+    '예습', '문제집', '인강', '자격증', '토익', '논문', '학습', '스터디',
+    '수강', '필기', '학원', '단어장',
+    'study', 'exam', 'homework', 'lecture',
+  ],
+};
+
 const DEFAULT_CATEGORY = 'work';
+
+// 드롭다운에서만 쓰는 값. 추가하는 순간 실제 카테고리로 확정되며 저장되지 않는다.
+const AUTO_CATEGORY = 'auto';
 const LEAVE_DURATION = 180; // style.css 의 item-out 애니메이션과 맞춘다
 const SEARCH_DEBOUNCE = 120;
 
@@ -35,6 +62,7 @@ const FILTER_KEYS = {
 const form = document.getElementById('todo-form');
 const input = document.getElementById('todo-input');
 const categorySelect = document.getElementById('category-select');
+const categoryHint = document.getElementById('category-hint');
 const searchInput = document.getElementById('search-input');
 const sortSelect = document.getElementById('sort-select');
 const filterBar = document.getElementById('filter-bar');
@@ -216,6 +244,48 @@ function askConfirm({ title, text, actions }) {
 
     confirmDialog.showModal();
   });
+}
+
+/* ── 자동 분류 ───────────────────────────── */
+
+// 입력 글자에서 카테고리를 추측한다. DOM 도 상태도 건드리지 않는 순수 함수다.
+// score 가 0 이면 추측하지 못한 것이고, category 는 기본값이다.
+function classify(text) {
+  const haystack = text.toLowerCase();
+  let best = { category: DEFAULT_CATEGORY, score: 0, matched: [] };
+
+  // CATEGORIES 의 순서가 곧 동점일 때의 우선순위다 (업무 > 개인 > 공부).
+  // 더 큰 점수일 때만 교체하므로 먼저 나온 카테고리가 동점에서 이긴다.
+  for (const category of Object.keys(CATEGORIES)) {
+    const matched = KEYWORDS[category].filter((word) => haystack.includes(word));
+
+    if (matched.length > best.score) {
+      best = { category, score: matched.length, matched };
+    }
+  }
+
+  return best;
+}
+
+// 자동일 때만, 그리고 입력이 있을 때만 무엇으로 갈지 미리 보여준다.
+function updateCategoryHint() {
+  const text = input.value.trim();
+
+  if (categorySelect.value !== AUTO_CATEGORY || !text) {
+    categoryHint.classList.add('hidden');
+    categoryHint.textContent = '';
+    return;
+  }
+
+  const guess = classify(text);
+  categoryHint.dataset.category = guess.category;
+  categoryHint.classList.remove('hidden');
+
+  // 못 맞혔을 때 맞춘 척하지 않는다
+  categoryHint.textContent =
+    guess.score === 0
+      ? `키워드 없음 · 기본값 ${CATEGORIES[guess.category]}`
+      : `${CATEGORIES[guess.category]}로 분류 · ${guess.matched.join(', ')}`;
 }
 
 /* ── 상대 시간 ───────────────────────────── */
@@ -698,10 +768,17 @@ form.addEventListener('submit', (e) => {
   const text = input.value.trim();
   if (!text) return;
 
-  addTodo(text, categorySelect.value);
+  const chosen = categorySelect.value;
+  addTodo(text, chosen === AUTO_CATEGORY ? classify(text).category : chosen);
+
   input.value = '';
   input.focus();
+  updateCategoryHint();
 });
+
+// 입력과 드롭다운 어느 쪽이 바뀌어도 힌트를 다시 계산한다
+input.addEventListener('input', updateCategoryHint);
+categorySelect.addEventListener('change', updateCategoryHint);
 
 // 글자마다 목록 전체를 다시 그리지 않도록 잠깐 모아서 처리한다
 searchInput.addEventListener('input', () => {

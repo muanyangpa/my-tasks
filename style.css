@@ -379,6 +379,43 @@ body {
   background: var(--accent-active);
 }
 
+/* ── 자동 분류 힌트 ────────────────────── */
+.category-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 2px;
+  font-size: 0.76rem;
+  color: var(--text-sub);
+}
+
+.category-hint.hidden {
+  display: none;
+}
+
+/* 어느 카테고리로 가는지 색으로도 알려준다 */
+.category-hint::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.category-hint[data-category="work"]::before {
+  background: var(--work);
+}
+
+.category-hint[data-category="personal"]::before {
+  background: var(--personal);
+}
+
+.category-hint[data-category="study"]::before {
+  background: var(--study);
+}
+
 /* ── 검색 / 정렬 / 도구 ────────────────── */
 .tool-row {
   display: flex;
