@@ -1,2 +1,5 @@
 .DS_Store
 *.png
+
+# /export 로 만든 대화 기록 — 로컬에만 둔다
+*-command-message*.txt
