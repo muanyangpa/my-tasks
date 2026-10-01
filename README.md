@@ -6,7 +6,7 @@
 ## 실행
 
 ```bash
-git clone https://github.com/muanyangpa/my-tasks.git
+git clone https://github.com/zero108-sea/my-tasks.git
 cd my-tasks
 open index.html
 ```
