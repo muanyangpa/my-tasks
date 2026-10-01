@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Tasks</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // 첫 페인트 전에 테마를 적용해야 라이트 화면이 번쩍이지 않는다
+    (function () {
+      try {
+        const saved = localStorage.getItem('my-tasks-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <!-- 왼쪽 레일: 읽는 것 (상태와 전환) -->
+    <aside class="rail">
+      <header class="rail-head">
+        <div class="brand">
+          <h1 class="brand-name">My Tasks</h1>
+          <p class="brand-sub" id="remaining-badge">0개 남음</p>
+        </div>
+
+        <button
+          type="button"
+          class="theme-toggle"
+          id="theme-toggle"
+          aria-label="다크 모드 전환"
+        >
+          <span class="theme-icon" id="theme-icon">🌙</span>
+        </button>
+      </header>
+
+      <!-- 값만 갱신해야 프로그레스 바의 전환 효과가 살아있으므로 마크업을 고정해 둔다 -->
+      <section class="progress-block">
+        <div class="progress-head">
+          <span class="progress-label">전체 진행률</span>
+          <span class="progress-value" id="overall-value">0/0 완료 (0%)</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="overall-fill"></div>
+        </div>
+        <p class="today-count" id="today-count">오늘 추가된 할 일 0개</p>
+      </section>
+
+      <!-- 필터와 카테고리별 진행률을 한 덩어리로 묶었다 -->
+      <nav class="filter-nav" id="filter-bar" aria-label="카테고리 필터">
+        <button type="button" class="filter-row is-active" data-filter="all">
+          <span class="filter-name">전체</span>
+          <span class="filter-count" data-role="count">0</span>
+          <span class="filter-track"><span class="filter-fill" data-role="fill"></span></span>
+        </button>
+        <button type="button" class="filter-row" data-filter="work">
+          <span class="filter-name">업무</span>
+          <span class="filter-count" data-role="count">0</span>
+          <span class="filter-track"><span class="filter-fill" data-role="fill"></span></span>
+        </button>
+        <button type="button" class="filter-row" data-filter="personal">
+          <span class="filter-name">개인</span>
+          <span class="filter-count" data-role="count">0</span>
+          <span class="filter-track"><span class="filter-fill" data-role="fill"></span></span>
+        </button>
+        <button type="button" class="filter-row" data-filter="study">
+          <span class="filter-name">공부</span>
+          <span class="filter-count" data-role="count">0</span>
+          <span class="filter-track"><span class="filter-fill" data-role="fill"></span></span>
+        </button>
+      </nav>
+
+      <footer class="rail-foot">
+        <div class="shortcut"><span><kbd>Alt</kbd><kbd>N</kbd></span> 입력창</div>
+        <div class="shortcut"><span><kbd>Alt</kbd><kbd>1</kbd>–<kbd>4</kbd></span> 필터 전환</div>
+      </footer>
+    </aside>
+
+    <!-- 오른쪽 본문: 하는 것 (입력과 목록) -->
+    <main class="main">
+      <div class="main-inner">
+        <div class="compose">
+          <form class="compose-form" id="todo-form">
+            <input
+              type="text"
+              id="todo-input"
+              class="compose-input"
+              placeholder="할 일을 입력하세요"
+              autocomplete="off"
+            >
+            <select id="category-select" class="compose-select" aria-label="카테고리">
+              <option value="auto" selected>자동</option>
+              <option value="work">업무</option>
+              <option value="personal">개인</option>
+              <option value="study">공부</option>
+            </select>
+            <button type="submit" class="compose-add">추가</button>
+          </form>
+
+          <p class="category-hint hidden" id="category-hint" aria-live="polite"></p>
+        </div>
+
+        <div class="toolbar">
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="할 일 검색"
+            autocomplete="off"
+            aria-label="할 일 검색"
+          >
+          <select id="sort-select" class="sort-select" aria-label="정렬 기준">
+            <option value="manual">직접 정렬</option>
+            <option value="created">생성일순</option>
+            <option value="category">카테고리순</option>
+            <option value="done">완료 상태순</option>
+          </select>
+
+          <div class="toolbar-actions">
+            <button type="button" class="ghost-btn" id="export-btn">내보내기</button>
+            <button type="button" class="ghost-btn" id="import-btn">가져오기</button>
+            <button type="button" class="ghost-btn danger" id="clear-done-btn" disabled>
+              완료 항목 삭제
+            </button>
+            <input type="file" id="import-file" accept="application/json,.json" hidden>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-scroll">
+        <div class="main-inner">
+          <ul class="todo-list" id="todo-list"></ul>
+          <p class="empty-msg" id="empty-msg">할 일이 없습니다. 추가해보세요!</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog class="confirm-dialog" id="confirm-dialog">
+    <div class="confirm-inner">
+      <h2 class="confirm-title" id="confirm-title"></h2>
+      <p class="confirm-text" id="confirm-text"></p>
+      <div class="confirm-actions" id="confirm-actions"></div>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>

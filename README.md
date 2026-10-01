@@ -47,11 +47,15 @@ open index.html
 ## 파일 구성
 
 ```
-index.html   화면 구조
-style.css    테마 토큰과 스타일
-script.js    상태 관리, 렌더링, 이벤트
-docs/        기능별 설계 문서
+index.html    화면 구조
+style.css     테마 토큰과 스타일
+script.js     상태 관리, 렌더링, 이벤트
+docs/         기능별 설계 문서
+web_version/  데스크톱 전체 화면 레이아웃 (별도 버전)
 ```
+
+좁은 화면 기준으로 만든 루트 버전과, 데스크톱 2단 레이아웃인
+[`web_version/`](web_version/)이 각각 독립적으로 동작합니다.
 
 ## 구현 노트
 
