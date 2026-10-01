@@ -82,60 +82,60 @@
 
     <!-- 오른쪽 본문: 하는 것 (입력과 목록) -->
     <main class="main">
-      <div class="main-inner">
-        <div class="compose">
-          <form class="compose-form" id="todo-form">
-            <input
-              type="text"
-              id="todo-input"
-              class="compose-input"
-              placeholder="할 일을 입력하세요"
-              autocomplete="off"
-            >
-            <select id="category-select" class="compose-select" aria-label="카테고리">
-              <option value="auto" selected>자동</option>
-              <option value="work">업무</option>
-              <option value="personal">개인</option>
-              <option value="study">공부</option>
-            </select>
-            <button type="submit" class="compose-add">추가</button>
-          </form>
+      <div class="main-head">
+        <div class="main-inner">
+          <div class="compose">
+            <form class="compose-form" id="todo-form">
+              <input
+                type="text"
+                id="todo-input"
+                class="compose-input"
+                placeholder="할 일을 입력하세요"
+                autocomplete="off"
+              >
+              <select id="category-select" class="compose-select" aria-label="카테고리">
+                <option value="auto" selected>자동</option>
+                <option value="work">업무</option>
+                <option value="personal">개인</option>
+                <option value="study">공부</option>
+              </select>
+              <button type="submit" class="compose-add">추가</button>
+            </form>
 
-          <p class="category-hint hidden" id="category-hint" aria-live="polite"></p>
-        </div>
-
-        <div class="toolbar">
-          <input
-            type="search"
-            id="search-input"
-            class="search-input"
-            placeholder="할 일 검색"
-            autocomplete="off"
-            aria-label="할 일 검색"
-          >
-          <select id="sort-select" class="sort-select" aria-label="정렬 기준">
-            <option value="manual">직접 정렬</option>
-            <option value="created">생성일순</option>
-            <option value="category">카테고리순</option>
-            <option value="done">완료 상태순</option>
-          </select>
-
-          <div class="toolbar-actions">
-            <button type="button" class="ghost-btn" id="export-btn">내보내기</button>
-            <button type="button" class="ghost-btn" id="import-btn">가져오기</button>
-            <button type="button" class="ghost-btn danger" id="clear-done-btn" disabled>
-              완료 항목 삭제
-            </button>
-            <input type="file" id="import-file" accept="application/json,.json" hidden>
+            <p class="category-hint hidden" id="category-hint" aria-live="polite"></p>
           </div>
-        </div>
+
+          <div class="toolbar">
+            <input
+              type="search"
+              id="search-input"
+              class="search-input"
+              placeholder="할 일 검색"
+              autocomplete="off"
+              aria-label="할 일 검색"
+            >
+            <select id="sort-select" class="sort-select" aria-label="정렬 기준">
+              <option value="manual">직접 정렬</option>
+              <option value="created">생성일순</option>
+              <option value="category">카테고리순</option>
+              <option value="done">완료 상태순</option>
+            </select>
+
+            <div class="toolbar-actions">
+              <button type="button" class="ghost-btn" id="export-btn">내보내기</button>
+              <button type="button" class="ghost-btn" id="import-btn">가져오기</button>
+              <button type="button" class="ghost-btn danger" id="clear-done-btn" disabled>
+                완료 항목 삭제
+              </button>
+              <input type="file" id="import-file" accept="application/json,.json" hidden>
+            </div>
+          </div>
+          </div>
       </div>
 
-      <div class="list-scroll">
-        <div class="main-inner">
-          <ul class="todo-list" id="todo-list"></ul>
-          <p class="empty-msg" id="empty-msg">할 일이 없습니다. 추가해보세요!</p>
-        </div>
+      <div class="main-inner">
+        <ul class="todo-list" id="todo-list"></ul>
+        <p class="empty-msg" id="empty-msg">할 일이 없습니다. 추가해보세요!</p>
       </div>
     </main>
   </div>

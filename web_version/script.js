@@ -114,6 +114,9 @@ let editingDraft = { text: '', category: DEFAULT_CATEGORY };
 // 방금 추가된 항목에만 등장 애니메이션을 주기 위한 표시
 let enteringId = null;
 
+// 키보드로 집어 든 항목. 방향키로 옮기는 동안 유지된다.
+let grabbedId = null;
+
 let searchTimer = null;
 let toastTimer = null;
 
@@ -423,6 +426,7 @@ function createCategorySelect(className, selected) {
 function createTodoElement(todo) {
   const li = document.createElement('li');
   li.className = todo.done ? 'todo-item done' : 'todo-item';
+  if (todo.id === grabbedId) li.classList.add('is-grabbed');
   li.dataset.id = todo.id;
   li.dataset.category = todo.category;
 
@@ -430,7 +434,8 @@ function createTodoElement(todo) {
   handle.type = 'button';
   handle.className = 'drag-handle';
   handle.textContent = '⠿';
-  handle.setAttribute('aria-label', '끌어서 순서 변경');
+  handle.setAttribute('aria-label', '순서 변경: 끌어서 옮기거나 Enter 로 집어 방향키로 이동');
+  handle.setAttribute('aria-pressed', String(todo.id === grabbedId));
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
@@ -537,6 +542,14 @@ function render() {
     }
   }
 
+  // 집어 든 채로 다시 그려졌다면 그 손잡이로 포커스를 되돌린다.
+  // 되돌릴 대상이 사라졌다면 (필터·삭제) 집은 상태를 푼다.
+  if (grabbedId !== null) {
+    const handle = list.querySelector(`.todo-item[data-id="${grabbedId}"] .drag-handle`);
+    if (handle) handle.focus();
+    else grabbedId = null;
+  }
+
   emptyMsg.textContent = emptyMessage();
   emptyMsg.classList.toggle('hidden', visible.length > 0);
 
@@ -615,6 +628,7 @@ function startEdit(id) {
 
   editingId = id;
   editingDraft = { text: todo.text, category: todo.category };
+  grabbedId = null; // 편집과 순서 이동이 동시에 포커스를 다투지 않게 한다
   render();
 }
 
@@ -667,10 +681,9 @@ function elementAfterPointer(y) {
   }) ?? null;
 }
 
-// 화면에 보이는 순서를 배열에 반영한다.
+// 보이는 항목들의 새 순서를 배열에 반영한다.
 // 필터·검색으로 가려진 항목은 원래 자리를 그대로 지킨다.
-function commitDragOrder() {
-  const shownOrder = [...list.children].map((li) => Number(li.dataset.id));
+function applyVisibleOrder(shownOrder) {
   const shown = new Set(shownOrder);
   const byId = new Map(todos.map((todo) => [todo.id, todo]));
 
@@ -681,6 +694,24 @@ function commitDragOrder() {
 
   saveTodos();
   render();
+}
+
+function commitDragOrder() {
+  applyVisibleOrder([...list.children].map((li) => Number(li.dataset.id)));
+}
+
+// 키보드로 한 칸 옮긴다. 마우스 드래그와 같은 규칙을 쓴다.
+function moveTodo(id, delta) {
+  freezeSortOrder();
+
+  const visible = getVisibleTodos();
+  const from = visible.findIndex((todo) => todo.id === id);
+  const to = from + delta;
+  if (from === -1 || to < 0 || to >= visible.length) return;
+
+  const order = visible.map((todo) => todo.id);
+  [order[from], order[to]] = [order[to], order[from]];
+  applyVisibleOrder(order);
 }
 
 /* ── 내보내기 / 가져오기 ─────────────────── */
@@ -888,6 +919,35 @@ list.addEventListener('submit', (e) => {
 list.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && e.target.classList.contains('edit-input')) {
     cancelEdit();
+    return;
+  }
+
+  // 손잡이는 마우스로만 쓸 수 있으면 안 된다.
+  // Enter 로 집고, 방향키로 옮기고, 다시 Enter 나 Esc 로 놓는다.
+  const handle = e.target.closest('.drag-handle');
+  if (!handle) return;
+
+  const id = Number(handle.closest('.todo-item').dataset.id);
+
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    const grabbing = grabbedId !== id;
+    grabbedId = grabbing ? id : null;
+    render();
+    if (grabbing) showToast('방향키로 옮기고 Enter 로 놓습니다.');
+    return;
+  }
+
+  if (e.key === 'Escape' && grabbedId !== null) {
+    e.preventDefault();
+    grabbedId = null;
+    render();
+    return;
+  }
+
+  if (grabbedId === id && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault();
+    moveTodo(id, e.key === 'ArrowUp' ? -1 : 1);
   }
 });
 
